@@ -2,21 +2,16 @@ fn do_p1(input: &str) -> u32 {
     let (mut col1, mut col2) = str_to_col_vecs(input);
     col1.sort();
     col2.sort();
-    // This could be done with a tuple but a struct is used for readbility
-    struct FoldState {idx: usize, sum: u32}
-    col1.into_iter().fold(FoldState {idx: 0, sum: 0}, |acc, c1| {
-        FoldState {idx: acc.idx + 1, sum: acc.sum + c1.abs_diff(col2[acc.idx])}
-    }).sum
+    std::iter::zip(col1, col2)
+        .map(|(c1, c2)| c1.abs_diff(c2))
+        .sum()
 }
 
 fn do_p2(input: &str) -> u32 {
     let (col1, col2) = str_to_col_vecs(input);
     col1.into_iter()
         .map(|c1| col2.iter()
-            .filter_map(|c2| match c1 == *c2 {
-                true => Some(true),
-                false => None
-            })
+            .filter(|&c2| &c1 == c2)
             .count() as u32 * c1)
         .sum()
 }

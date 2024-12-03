@@ -29,17 +29,26 @@ impl std::str::FromStr for MulCmd {
 fn parse_input(input: &str, enable_do_dont: bool) -> Vec<MulCmd> {
     let mut to_parse = input.to_string();
     if enable_do_dont {
-        // I think this is recursively adding more or something...
-        to_parse = to_parse.split("don't()")
-            .collect::<Vec<_>>()
-            .windows(2)
-            .map(|t| (t[0].to_string(), t[1].split("do()")
-                .collect::<Vec<_>>()
-                .windows(2)
-                .map(|tt| tt[1])
-                .collect::<String>()))
-            .map(|(s1, s2)| s1 + s2.as_str())
-            .collect();
+        // Thanks to https://github.com/bluescreen/aoc2024/blob/master/src/p3.ts
+        // for the regex on this part... Actually coulda done that myself, I
+        // think.
+        let re = Regex::new(r"mul\(\d+{1,3},\d+{1,3}\)|(?:do\([^)]*\)|don't\([^)]*\))")
+            .unwrap();
+        let caps = re.captures_iter(to_parse.as_str())
+            .map(|c| c.extract::<0>().0)
+            .collect::<Vec<_>>();
+        let mut parsable: Vec<&str> = Vec::new();
+        let mut add = true;
+        for s in &caps {
+            match s {
+                &"do()" => add = true,
+                &"don't()" => add = false,
+                _ => if add {
+                    parsable.push(s);
+                }
+            }
+        }
+        to_parse = parsable.into_iter().collect();
     }
     let re = Regex::new(r"mul\([0-9]{1,3},[0-9]{1,3}\)").unwrap();
     re.captures_iter(to_parse.as_str())

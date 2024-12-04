@@ -11,6 +11,14 @@ impl Chr {
             _ => None
         }
     }
+
+    pub fn match_mas_slice(chrs: &[Self]) -> Option<()> {
+        match chrs {
+            &[Self::M, Self::A, Self::S]
+                | &[Self::S, Self::A, Self::M] => Some(()),
+            _ => None
+        }
+    }
 }
 
 impl std::str::FromStr for Chr {
@@ -72,6 +80,27 @@ fn search_diag(board: &DMatrix<Chr>) -> usize {
     n_words
 }
 
+fn search_x_mas(board: &DMatrix<Chr>) -> usize {
+    let mut n_words = 0;
+    for r in 0..=(board.nrows() - 3) {
+        for c in 0..=(board.ncols() - 3) {
+            let view = board.view((r, c), (3, 3));
+            let diag = view.diagonal().iter().map(|c| c.clone()).collect::<Vec<_>>();
+            let tdiag = mirror(&view).diagonal().iter().map(|c| c.clone()).collect::<Vec<_>>();
+            let mut is_valid = false;
+            if let Some(_) = Chr::match_mas_slice(diag.as_slice()) {
+                is_valid = true;
+            }
+            if let Some(_) = Chr::match_mas_slice(tdiag.as_slice()) {
+                if is_valid {
+                    n_words += 1;
+                }
+            }
+        }
+    }
+    n_words
+}
+
 fn mirror(mtx: &DMatrixView<Chr>) -> DMatrix<Chr> {
     let mut v_mirror = mtx.row_iter()
         .map(|r| r.iter().map(|c| c.clone().to_owned()).collect::<Vec<_>>())
@@ -86,9 +115,14 @@ fn do_p1(input: &str) -> usize {
     search_horiz(&b) + search_vert(&b) + search_diag(&b)
 }
 
+fn do_p2(input: &str) -> usize {
+    search_x_mas(&parse_input(input))
+}
+
 fn main() {
     let input = std::fs::read_to_string("inputs/d04.txt").unwrap();
     println!("D04P01: {}", do_p1(input.as_str()));
+    println!("D04P02: {}", do_p2(input.as_str()));
 }
 
 #[cfg(test)]
@@ -107,7 +141,21 @@ SMSMSASXSS
 SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX";
-        let parsed = parse_input(input);
-        assert_eq!(search_horiz(&parsed) + search_vert(&parsed) + search_diag(&parsed), 18); //8);
+        assert_eq!(do_p1(input), 18);
+    }
+
+    #[test]
+    fn test_p2() {
+        let input = "MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX";
+        assert_eq!(do_p2(input), 9);
     }
 }

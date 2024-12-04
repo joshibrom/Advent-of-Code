@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+nalgebra = "0.33.2"
 regex = "1.11.1"
 
 [[bin]]
@@ -17,3 +18,7 @@ path = "src/d02.rs"
 [[bin]]
 name = "d03"
 path = "src/d03.rs"
+
+[[bin]]
+name = "d04"
+path = "src/d04.rs"

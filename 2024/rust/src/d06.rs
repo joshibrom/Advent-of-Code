@@ -32,7 +32,7 @@ impl Direction {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum MapChar {
     Empty, Blockage, Guard
 }
@@ -50,22 +50,24 @@ impl std::str::FromStr for MapChar {
     }
 }
 
-fn parse_input(input: &str) -> HashMap<Coord, MapChar> {
+fn parse_input(input: &str) -> (HashMap<Coord, MapChar>, (usize, usize)) {
     let mut board = HashMap::new();
     let input: Vec<Vec<_>> = input.lines()
         .map(|ln| ln.chars().map(|c| c.to_string()).collect())
         .collect();
     let mut r = 0;
     let mut c = 0;
+    let mut n_cols = 0;
     for ln in input.iter() {
         for ch in ln.iter() {
             board.insert(Coord::new_from_usize(r, c), ch.as_str().parse().unwrap());
             c += 1;
         }
+        n_cols = n_cols.max(c);
         c = 0;
         r += 1;
     }
-    board
+    (board, (r, n_cols))
 }
 
 fn find_guard(board: &HashMap<Coord, MapChar>) -> Coord {
@@ -80,7 +82,7 @@ fn find_guard(board: &HashMap<Coord, MapChar>) -> Coord {
         .to_owned()
 }
 
-fn get_guard_path(board: &HashMap<Coord, MapChar>) -> HashSet<Coord> {
+fn get_guard_path(board: &HashMap<Coord, MapChar>, max_path_len: Option<usize>) -> Option<HashSet<Coord>> {
     let guard = find_guard(&board);
     let trans = HashMap::from([
         (Direction::West, (0, -1)),
@@ -95,25 +97,63 @@ fn get_guard_path(board: &HashMap<Coord, MapChar>) -> HashSet<Coord> {
         Coord::new(pos.r + t.0, pos.c + t.1)
     };
     let mut visited: HashSet<Coord> = HashSet::new();
+    let mut path_len = 0;
     while let Some(mc) = board.get(&peek(&dir, &pos)) {
+        path_len += 1;
+        if let Some(n) = max_path_len {
+            if path_len >= n {
+                return None;
+            }
+        }
         visited.insert(pos);
         if mc == &MapChar::Blockage {
             dir = dir.rot_clock();
         }
         pos = peek(&dir, &pos);
     }
-    visited
+    Some(visited)
 }
 
 fn do_p1(input: &str) -> usize {
-    let board = parse_input(input);
-    let visited = get_guard_path(&board);
-    visited.len() + 1
+    let board = parse_input(input).0;
+    match get_guard_path(&board, None) {
+        Some(p) => p.len() + 1,
+        None => 0
+    }
+}
+
+fn do_p2(input: &str) -> usize {
+    let (board, (n_rows, n_cols)) = parse_input(input);
+    dbg!(n_rows, n_cols);
+    let guard_pos = find_guard(&board);
+    let guard_path = get_guard_path(&board, None).unwrap();
+    let max_path_len = guard_path.len() * 2;
+    (0..n_rows)
+        .map(|r| {
+            (0..n_cols)
+                .map(|c| {
+                    let mut new_board = board.clone();
+                    let curr = Coord::new_from_usize(r, c);
+                    if curr != guard_pos && guard_path.contains(&curr) {
+                        new_board.entry(curr).and_modify(|ch| *ch = MapChar::Blockage);
+                    } else {
+                        return false;
+                    }
+                    match get_guard_path(&new_board, Some(max_path_len)) {
+                        Some(_) => false,
+                        None => true
+                    }
+                })
+                .filter(|&b| b)
+                .count()
+        })
+        .sum::<usize>() + 1
 }
 
 fn main() {
     let input = std::fs::read_to_string("inputs/d06.txt").unwrap();
     println!("D06P01: {}", do_p1(input.as_str()));
+    println!("D06P02: {}", do_p2(input.as_str()));
 }
 
 #[cfg(test)]
@@ -134,5 +174,10 @@ mod d06_tests {
     #[test]
     fn test_p1() {
         assert_eq!(do_p1(INPUT), 41);
+    }
+
+    #[test]
+    fn test_p2() {
+        assert_eq!(do_p2(INPUT), 6);
     }
 }

@@ -1,0 +1,36 @@
+[package]
+name = "rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+nalgebra = "0.33.2"
+regex = "1.11.1"
+
+[[bin]]
+name = "d01"
+path = "src/d01.rs"
+
+[[bin]]
+name = "d02"
+path = "src/d02.rs"
+
+[[bin]]
+name = "d03"
+path = "src/d03.rs"
+
+[[bin]]
+name = "d04"
+path = "src/d04.rs"
+
+[[bin]]
+name = "d05"
+path = "src/d05.rs"
+
+[[bin]]
+name = "d06"
+path = "src/d06.rs"
+
+[[bin]]
+name = "d09"
+path = "src/d09.rs"

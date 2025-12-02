@@ -1,0 +1,3 @@
+(library
+ (name OCaml)
+ (public_name OCaml.AoC_Lib))
